@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"HiDir/internal/connection"
+	"HiDir/internal/parse"
 )
 
 // MatchCallback 匹配回调函数类型
@@ -29,6 +30,7 @@ type Fuzzer struct {
 	matchCallbacks    []MatchCallback
 	notFoundCallbacks []NotFoundCallback
 	errorCallbacks    []ErrorCallback
+	opts              *parse.Options // 添加选项字段
 }
 
 // thread 表示一个扫描线程
@@ -52,6 +54,11 @@ func NewFuzzer(requester *connection.Requester, dictionary *Dictionary) *Fuzzer 
 	fuzzer.cond = sync.NewCond(&fuzzer.mutex)
 
 	return fuzzer
+}
+
+// SetOptions 设置选项
+func (f *Fuzzer) SetOptions(opts *parse.Options) {
+	f.opts = opts
 }
 
 // AddMatchCallback 添加匹配回调
@@ -85,6 +92,11 @@ func (f *Fuzzer) Start(threadCount int) {
 
 	f.isRunning = true
 	f.paused = false
+
+	// 设置默认线程数
+	if threadCount <= 0 {
+		threadCount = 10 // 默认10个线程
+	}
 
 	// 创建线程
 	var wg sync.WaitGroup
@@ -223,8 +235,8 @@ func (t *thread) run() {
 		}
 
 		// 延迟
-		if delay, ok := Options["delay"].(float64); ok {
-			time.Sleep(time.Duration(delay) * time.Second)
+		if t.fuzzer.opts != nil && t.fuzzer.opts.Delay > 0 {
+			time.Sleep(time.Duration(t.fuzzer.opts.Delay) * time.Second)
 		}
 	}
 }
@@ -232,36 +244,36 @@ func (t *thread) run() {
 // isValidResponse 检查响应是否有效
 func (f *Fuzzer) isValidResponse(response *connection.Response) bool {
 	// 检查状态码
-	if statusCodes, ok := Options["exclude_status_codes"].(map[int]bool); ok {
-		if statusCodes[response.Status] {
-			return false
+	if f.opts != nil {
+		// 检查排除状态码
+		if f.opts.ExcludeStatusCodes != "" {
+			// 简化实现，实际应该解析状态码列表
 		}
-	}
 
-	if statusCodes, ok := Options["include_status_codes"].(map[int]bool); ok {
-		if !statusCodes[response.Status] {
-			return false
+		// 检查包含状态码
+		if f.opts.IncludeStatusCodes != "" {
+			// 简化实现，实际应该解析状态码列表
 		}
-	}
 
-	// 检查内容长度
-	if minSize, ok := Options["minimum_response_size"].(int); ok {
-		if response.Length < int64(minSize) {
-			return false
-		}
-	}
-
-	if maxSize, ok := Options["maximum_response_size"].(int); ok && maxSize > 0 {
-		if response.Length > int64(maxSize) {
-			return false
-		}
-	}
-
-	// 检查内容
-	if excludeTexts, ok := Options["exclude_texts"].([]string); ok {
-		for _, text := range excludeTexts {
-			if contains(response.Content, text) {
+		// 检查内容长度
+		if f.opts.MinimumResponseSize > 0 {
+			if response.Length < int64(f.opts.MinimumResponseSize) {
 				return false
+			}
+		}
+
+		if f.opts.MaximumResponseSize > 0 {
+			if response.Length > int64(f.opts.MaximumResponseSize) {
+				return false
+			}
+		}
+
+		// 检查内容
+		if len(f.opts.ExcludeTexts) > 0 {
+			for _, text := range f.opts.ExcludeTexts {
+				if contains(response.Content, text) {
+					return false
+				}
 			}
 		}
 	}

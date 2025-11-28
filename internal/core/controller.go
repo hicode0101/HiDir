@@ -25,6 +25,7 @@ type Controller struct {
 	passedURLs        map[string]bool
 	errors            int
 	consecutiveErrors int
+	dictFiles         []string // 保存使用的字典文件
 }
 
 // NewController 创建新的Controller实例
@@ -33,6 +34,7 @@ func NewController(opts *parse.Options) *Controller {
 		opts:              opts,
 		results:           make([]*connection.Response, 0),
 		targets:           make([]string, 0),
+		dictFiles:         make([]string, 0),
 		passedURLs:        make(map[string]bool),
 		errors:            0,
 		consecutiveErrors: 0,
@@ -48,13 +50,28 @@ func (c *Controller) Setup() error {
 	c.requester = connection.NewRequester()
 
 	// 初始化字典
-	c.dictionary = NewDictionary(strings.Split(c.opts.Wordlists, ",")...)
+	var dictFiles []string
+	if c.opts.Wordlists != "" {
+		dictFiles = strings.Split(c.opts.Wordlists, ",")
+	} else {
+		// 默认使用dict目录下的所有txt文件
+		dictFiles = utils.GetFilesByExtension("./dict", "txt")
+		if len(dictFiles) == 0 {
+			return fmt.Errorf("no dictionary files found in dict directory")
+		}
+	}
+
+	// 保存字典文件路径
+	c.dictFiles = dictFiles
+
+	c.dictionary = NewDictionary(dictFiles...)
 	if err := c.dictionary.Load(); err != nil {
 		return err
 	}
 
 	// 初始化fuzzer
 	c.fuzzer = NewFuzzer(c.requester, c.dictionary)
+	c.fuzzer.SetOptions(c.opts) // 设置选项
 
 	// 设置回调
 	c.setupCallbacks()
@@ -163,6 +180,29 @@ func (c *Controller) setupHeaders() {
 
 // Run 运行扫描
 func (c *Controller) Run() {
+	// 输出主要参数信息
+	fmt.Println("\n=== Scan Configuration ===")
+	fmt.Println("Target URLs:")
+	for _, target := range c.targets {
+		if target != "" {
+			fmt.Printf("  - %s\n", target)
+		}
+	}
+	
+	// 输出HTTP请求方法
+	httpMethod := "GET" // 默认值
+	if c.opts.HTTPMethod != "" {
+		httpMethod = c.opts.HTTPMethod
+	}
+	fmt.Printf("HTTP Method: %s\n", httpMethod)
+	
+	// 输出使用的字典文件
+	fmt.Println("Dictionary Files:")
+	for _, dictFile := range c.dictFiles {
+		fmt.Printf("  - %s\n", dictFile)
+	}
+	fmt.Println("========================")
+
 	c.startTime = time.Now()
 
 	for _, target := range c.targets {

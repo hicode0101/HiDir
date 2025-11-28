@@ -8,18 +8,21 @@ HiDir 是一个用 Go 语言实现的目录扫描工具，类似于 dirsearch，
 
 1. 确保你已经安装了 Go 1.16 或更高版本
 2. 克隆仓库：
-   ```bash
+```
 git clone https://github.com/hicode0101/HiDir.git
+
 cd HiDir
-   ```
+```
+   
 3. 构建项目：
-   ```bash
+```bash
 go build -o hidir ./cmd/hidir
-   ```
+```
+
 4. 运行：
-   ```bash
+```bash
 ./hidir
-   ```
+```
 
 ## 使用方法
 

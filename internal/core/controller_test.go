@@ -11,7 +11,7 @@ func TestControllerSetup(t *testing.T) {
 	t.Run("BasicSetup", func(t *testing.T) {
 		opts := &parse.Options{
 			URLs:      []string{"https://example.com"},
-			Wordlists: "",
+			Wordlists: "./dict/dicc.txt", // 使用现有的字典文件
 		}
 
 		controller := NewController(opts)
@@ -25,7 +25,7 @@ func TestControllerSetup(t *testing.T) {
 	t.Run("SetupWithAuth", func(t *testing.T) {
 		opts := &parse.Options{
 			URLs:      []string{"https://example.com"},
-			Wordlists: "",
+			Wordlists: "./dict/dicc.txt", // 使用现有的字典文件
 			Auth:      "username:password",
 			AuthType:  "basic",
 		}
@@ -41,7 +41,7 @@ func TestControllerSetup(t *testing.T) {
 	t.Run("SetupWithProxyAuth", func(t *testing.T) {
 		opts := &parse.Options{
 			URLs:       []string{"https://example.com"},
-			Wordlists:   "",
+			Wordlists:   "./dict/dicc.txt", // 使用现有的字典文件
 			ProxyAuth: "proxyuser:proxypass",
 		}
 
@@ -58,7 +58,7 @@ func TestControllerProcessURLs(t *testing.T) {
 	t.Run("ProcessURLsFromURLs", func(t *testing.T) {
 		opts := &parse.Options{
 			URLs:      []string{"https://example.com", "https://test.com"},
-			Wordlists: "",
+			Wordlists: "./dict/dicc.txt", // 使用现有的字典文件
 		}
 
 		controller := NewController(opts)
@@ -74,7 +74,7 @@ func TestControllerProcessURLs(t *testing.T) {
 	t.Run("ProcessURLsFromCIDR", func(t *testing.T) {
 		opts := &parse.Options{
 			CIDR:      "192.168.1.0/30", // 应该产生2个可用IP（移除网络地址和广播地址后）
-			Wordlists: "",
+			Wordlists: "./dict/dicc.txt", // 使用现有的字典文件
 		}
 
 		controller := NewController(opts)
@@ -91,7 +91,7 @@ func TestControllerAddDirectory(t *testing.T) {
 	t.Run("AddNormalDirectory", func(t *testing.T) {
 		opts := &parse.Options{
 			URLs:      []string{"https://example.com"},
-			Wordlists: "",
+			Wordlists: "./dict/dicc.txt", // 使用现有的字典文件
 		}
 
 		controller := NewController(opts)
@@ -109,7 +109,7 @@ func TestControllerAddDirectory(t *testing.T) {
 	t.Run("AddExcludedDirectory", func(t *testing.T) {
 		opts := &parse.Options{
 			URLs:           []string{"https://example.com"},
-			Wordlists:       "",
+			Wordlists:       "./dict/dicc.txt", // 使用现有的字典文件
 			ExcludeSubdirs: "test",
 		}
 
@@ -125,7 +125,7 @@ func TestControllerAddDirectory(t *testing.T) {
 	t.Run("AddDuplicateDirectory", func(t *testing.T) {
 		opts := &parse.Options{
 			URLs:      []string{"https://example.com"},
-			Wordlists: "",
+			Wordlists: "./dict/dicc.txt", // 使用现有的字典文件
 		}
 
 		controller := NewController(opts)

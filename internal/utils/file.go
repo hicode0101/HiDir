@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // File 表示一个文件对象
@@ -103,6 +104,31 @@ func (fu *FileUtils) CanWrite(path string) bool {
 	file.Close()
 	os.Remove(path)
 	return true
+}
+
+// GetFilesByExtension 获取指定目录下的所有指定扩展名的文件
+func GetFilesByExtension(dirPath, extension string) []string {
+	var files []string
+
+	// 遍历目录
+	err := filepath.Walk(dirPath, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		// 检查是否为文件且扩展名匹配
+		if !info.IsDir() && strings.HasSuffix(strings.ToLower(info.Name()), "."+strings.ToLower(extension)) {
+			files = append(files, path)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil
+	}
+
+	return files
 }
 
 // 全局FileUtils实例
