@@ -1,7 +1,7 @@
 package core
 
 import (
-	"github.com/yourusername/hidir/internal/connection"
+	"HiDir/internal/connection"
 )
 
 // Scanner 检测响应是否为有效路径

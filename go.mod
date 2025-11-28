@@ -1,4 +1,4 @@
-module github.com/yourusername/hidir
+module HiDir
 
 go 1.25.1
 

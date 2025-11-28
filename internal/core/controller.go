@@ -6,35 +6,35 @@ import (
 	"strings"
 	"time"
 
-	"github.com/yourusername/hidir/internal/common"
-	"github.com/yourusername/hidir/internal/connection"
-	"github.com/yourusername/hidir/internal/parse"
-	"github.com/yourusername/hidir/internal/utils"
+	"HiDir/internal/common"
+	"HiDir/internal/connection"
+	"HiDir/internal/parse"
+	"HiDir/internal/utils"
 )
 
 // Controller 控制器
 type Controller struct {
-	requester  *connection.Requester
-	dictionary *Dictionary
-	fuzzer     *Fuzzer
-	opts       *parse.Options
-	results    []*connection.Response
-	targets    []string
-	startTime  time.Time
-	directories []string
-	passedURLs  map[string]bool
-	errors      int
+	requester         *connection.Requester
+	dictionary        *Dictionary
+	fuzzer            *Fuzzer
+	opts              *parse.Options
+	results           []*connection.Response
+	targets           []string
+	startTime         time.Time
+	directories       []string
+	passedURLs        map[string]bool
+	errors            int
 	consecutiveErrors int
 }
 
 // NewController 创建新的Controller实例
 func NewController(opts *parse.Options) *Controller {
 	return &Controller{
-		opts:       opts,
-		results:    make([]*connection.Response, 0),
-		targets:    make([]string, 0),
-		passedURLs: make(map[string]bool),
-		errors:     0,
+		opts:              opts,
+		results:           make([]*connection.Response, 0),
+		targets:           make([]string, 0),
+		passedURLs:        make(map[string]bool),
+		errors:            0,
 		consecutiveErrors: 0,
 	}
 }

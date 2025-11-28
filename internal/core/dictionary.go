@@ -3,7 +3,7 @@ package core
 import (
 	"strings"
 
-	"github.com/yourusername/hidir/internal/utils"
+	"HiDir/internal/utils"
 )
 
 // Dictionary 管理字典

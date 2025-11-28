@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/yourusername/hidir/internal/core"
-	"github.com/yourusername/hidir/internal/parse"
+	"HiDir/internal/core"
+	"HiDir/internal/parse"
 )
 
 const VERSION = "1.0.0"

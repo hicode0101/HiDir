@@ -6,7 +6,7 @@ import (
 
 	"github.com/spf13/pflag"
 
-	"github.com/yourusername/hidir/internal/common"
+	"HiDir/internal/common"
 )
 
 // Options 存储命令行参数

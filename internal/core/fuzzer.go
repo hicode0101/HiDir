@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/yourusername/hidir/internal/connection"
+	"HiDir/internal/connection"
 )
 
 // MatchCallback 匹配回调函数类型
@@ -18,17 +18,17 @@ type ErrorCallback func(error)
 
 // Fuzzer 模糊测试器
 type Fuzzer struct {
-	threads          []*thread
-	requester        *connection.Requester
-	dictionary       *Dictionary
-	basePath         string
-	isRunning        bool
-	paused           bool
-	mutex            sync.Mutex
-	cond             *sync.Cond
-	matchCallbacks   []MatchCallback
+	threads           []*thread
+	requester         *connection.Requester
+	dictionary        *Dictionary
+	basePath          string
+	isRunning         bool
+	paused            bool
+	mutex             sync.Mutex
+	cond              *sync.Cond
+	matchCallbacks    []MatchCallback
 	notFoundCallbacks []NotFoundCallback
-	errorCallbacks   []ErrorCallback
+	errorCallbacks    []ErrorCallback
 }
 
 // thread 表示一个扫描线程
@@ -41,13 +41,13 @@ type thread struct {
 // NewFuzzer 创建新的Fuzzer实例
 func NewFuzzer(requester *connection.Requester, dictionary *Dictionary) *Fuzzer {
 	fuzzer := &Fuzzer{
-		requester:        requester,
-		dictionary:       dictionary,
-		isRunning:        false,
-		paused:           false,
-		matchCallbacks:   make([]MatchCallback, 0),
+		requester:         requester,
+		dictionary:        dictionary,
+		isRunning:         false,
+		paused:            false,
+		matchCallbacks:    make([]MatchCallback, 0),
 		notFoundCallbacks: make([]NotFoundCallback, 0),
-		errorCallbacks:   make([]ErrorCallback, 0),
+		errorCallbacks:    make([]ErrorCallback, 0),
 	}
 	fuzzer.cond = sync.NewCond(&fuzzer.mutex)
 
