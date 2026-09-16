@@ -1,6 +1,6 @@
 # HiDir
 
-HiDir 是一个使用 Go 语言编写的高性能 Web 路径（目录/文件）暴力扫描工具，兼容 [dirsearch](https://github.com/maurosoria/dirsearch) 的功能与全部命令行参数。它内置了 dirsearch 的完整词表数据库（`db/dicc.txt`、分类词表、状态码黑名单、User-Agent 列表），并作为资源嵌入二进制文件中，编译后即可独立运行，无需安装 Python 环境与第三方依赖。
+HiDir 是一个使用 Go 语言编写的高性能 Web 路径（目录/文件）暴力扫描工具，兼容 dirsearch 的功能与全部命令行参数。它内置了 dirsearch 的完整词表数据库（`db/dicc.txt`、分类词表、状态码黑名单、User-Agent 列表），并作为资源嵌入二进制文件中，编译后即可独立运行，无需安装 Python 环境与第三方依赖。
 
 ## 功能特性
 
