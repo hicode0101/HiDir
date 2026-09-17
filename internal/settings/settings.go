@@ -7,17 +7,19 @@ import (
 	"time"
 )
 
-// Version 是 HiDir 的版本号，格式与 dirsearch 相同：<major>.<minor>.<revision>
-const Version = "1.0.0"
+// Version 是 HiDir 的版本号，格式与 dirsearch 相同：<major>.<minor>.<revision>。
+// 发布构建通过 -ldflags "-X hidir/internal/settings.Version=<tag>" 注入实际版本。
+var Version = "1.0.0"
 
 // Banner 是启动时打印的 ASCII Logo（风格与 dirsearch 保持一致）。
-const Banner = `
+// init 期基于注入后的 Version 求值。
+var Banner = `
  _   _ _ ____  _          v` + Version + `
-| | | (_)  _ \(_)_ __ 
+| | | (_)  _ \(_)_ __
 | |_| | | | | | | '__|
-|  _  | | |_| | | |   
-|_| |_|_|____/|_|_|   
-                      
+|  _  | | |_| | | |
+|_| |_|_|____/|_|_|
+
 `
 
 // DefaultEncoding 是默认的响应解码字符集。

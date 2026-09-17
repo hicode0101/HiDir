@@ -6,7 +6,8 @@ import (
 )
 
 // Version 供 --version 输出使用。
-const Version = "1.0.0"
+// 发布构建通过 -ldflags "-X hidir/internal/options.Version=<tag>" 注入实际版本。
+var Version = "1.0.0"
 
 // Usage 是帮助头部的用法说明。
 const Usage = "Usage: hidir [-u|--url] URL [-e|--extensions] EXTENSIONS [options]"

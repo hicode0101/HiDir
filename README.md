@@ -55,6 +55,21 @@ hidir -u https://example.com/ -e php --auth "admin:pass" --auth-type basic --tor
 <a id="install"></a>
 ## 📦 安装与构建
 
+**方式一：下载预编译包（推荐）**
+
+前往 [Releases](https://github.com/hicode0101/HiDir/releases) 下载对应平台的压缩包，解压即用，无需安装 Go：
+
+| 文件 | 平台 |
+|---|---|
+| `hidir_<版本>_windows_amd64.zip` | Windows 64 位 |
+| `hidir_<版本>_linux_amd64.tar.gz` | Linux 64 位 |
+| `hidir_<版本>_darwin_amd64.tar.gz` | macOS（Intel 芯片） |
+| `hidir_<版本>_darwin_arm64.tar.gz` | macOS（Apple Silicon M 系列） |
+
+每个包都附 SHA256 校验和（汇总见 `checksums.txt`）。推送 `v*` 标签时由 GitHub Actions 自动构建发布。
+
+**方式二：从源码构建**
+
 需要 Go 1.25+：
 
 ```bash
@@ -443,6 +458,10 @@ go build -o hidir .   # 构建
 go test ./...         # 全量测试（含基于 httptest 的端到端扫描集成测试）
 go vet ./...          # 静态检查
 ```
+
+发布流程：推送 `v*` 标签（如 `git tag v1.0.1 && git push origin v1.0.1`）后，
+GitHub Actions 自动交叉编译 Windows / Linux / macOS（Intel 与 Apple Silicon）
+四类产物并创建 Release，版本号在编译时注入（`hidir --version` 与启动横幅）。
 
 测试覆盖：参数解析与配置合并、词表生成（模板/分类/上限）、过滤逻辑、8 种报告格式（含 sqlite 读写与文件冲突检测）、HTTP 认证/重定向/错误分类，以及扫描发现、递归、爬取、跳过状态码、会话保存与恢复等端到端流程。
 
