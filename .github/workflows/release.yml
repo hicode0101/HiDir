@@ -92,44 +92,36 @@ jobs:
           CGO_ENABLED: 0
         run: |
           VERSION="${{ steps.meta.outputs.version }}"
-          OUTPUT="hidir_${VERSION}_${{ matrix.goos }}_${{ matrix.goarch }}${{ matrix.ext }}"
+          mkdir -p dist
           go build -trimpath \
             -ldflags "-s -w -X hidir/internal/settings.Version=${VERSION} -X hidir/internal/options.Version=${VERSION}" \
-            -o "$OUTPUT" .
-          echo "OUTPUT=$OUTPUT" >> "$GITHUB_ENV"
+            -o "dist/hidir${{ matrix.ext }}" .
+          echo "BIN=dist/hidir${{ matrix.ext }}" >> "$GITHUB_ENV"
 
       - name: Smoke test (linux/amd64)
         if: matrix.goos == 'linux' && matrix.goarch == 'amd64'
         run: |
-          chmod +x "$OUTPUT"
-          ./"$OUTPUT" --version
-          ./"$OUTPUT" -h > /dev/null
+          chmod +x "$BIN"
+          "$BIN" --version
+          "$BIN" -h > /dev/null
 
-      - name: Package (zip)
-        if: matrix.archive == 'zip'
+      - name: Package
         shell: bash
         run: |
           VERSION="${{ steps.meta.outputs.version }}"
           STAGING="hidir_${VERSION}_${{ matrix.goos }}_${{ matrix.goarch }}"
           mkdir "$STAGING"
-          cp "$OUTPUT" "$STAGING/"
+          cp "$BIN" "$STAGING/hidir${{ matrix.ext }}"
           cp README.md config.ini "$STAGING/"
-          zip -r "${STAGING}.zip" "$STAGING"
-          sha256sum "${STAGING}.zip" > "${STAGING}.zip.sha256"
-          echo "ARTIFACT=${STAGING}.zip" >> "$GITHUB_ENV"
-
-      - name: Package (tar.gz)
-        if: matrix.archive == 'tar.gz'
-        shell: bash
-        run: |
-          VERSION="${{ steps.meta.outputs.version }}"
-          STAGING="hidir_${VERSION}_${{ matrix.goos }}_${{ matrix.goarch }}"
-          mkdir "$STAGING"
-          cp "$OUTPUT" "$STAGING/"
-          cp README.md config.ini "$STAGING/"
-          tar -czf "${STAGING}.tar.gz" "$STAGING"
-          sha256sum "${STAGING}.tar.gz" > "${STAGING}.tar.gz.sha256"
-          echo "ARTIFACT=${STAGING}.tar.gz" >> "$GITHUB_ENV"
+          if [ "${{ matrix.archive }}" = "zip" ]; then
+            zip -r "${STAGING}.zip" "$STAGING"
+            sha256sum "${STAGING}.zip" > "${STAGING}.zip.sha256"
+            echo "ARTIFACT=${STAGING}.zip" >> "$GITHUB_ENV"
+          else
+            tar -czf "${STAGING}.tar.gz" "$STAGING"
+            sha256sum "${STAGING}.tar.gz" > "${STAGING}.tar.gz.sha256"
+            echo "ARTIFACT=${STAGING}.tar.gz" >> "$GITHUB_ENV"
+          fi
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
