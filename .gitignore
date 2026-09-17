@@ -28,7 +28,6 @@ go.work.sum
 
 *.log
 *.iml
-*.sum
 
 node_modules
 
