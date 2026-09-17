@@ -1,5 +1,5 @@
 // Package report 实现扫描结果报告的生成，
-// 支持 simple/plain/json/xml/md/csv/html 七种文件格式，
+// 支持 simple/plain/json/xml/md/csv/html/sqlite 八种格式，
 // 对应 dirsearch 的 lib/report 目录。
 package report
 
@@ -141,21 +141,27 @@ type Manager struct {
 	formats  []string
 	meta     StartInfo
 	reports  map[string]*fileReport
+	sqlite   *sqliteReport
 	files    map[string]string
+	tables   map[string]string
 	target   string
 	optionOf map[string]string // format -> 输出路径（可能含变量）
+	table    string            // SQL 报告的表名模板（可能含变量）
 	Warning  func(string)
 }
 
 // NewManager 创建报告管理器。
-// filePaths 将格式映射到输出文件路径（可含 {format} 等变量）。
-func NewManager(formats []string, meta StartInfo, filePaths map[string]string) *Manager {
+// filePaths 将格式映射到输出文件路径（可含 {format} 等变量），
+// table 是 SQL 输出的表名模板（与 dirsearch 的 output-sql-table 一致）。
+func NewManager(formats []string, meta StartInfo, filePaths map[string]string, table string) *Manager {
 	return &Manager{
 		formats:  formats,
 		meta:     meta,
 		reports:  map[string]*fileReport{},
+		tables:   map[string]string{},
 		files:    map[string]string{},
 		optionOf: filePaths,
+		table:    table,
 	}
 }
 
@@ -196,8 +202,8 @@ func buildReport(format string, meta StartInfo) *fileReport {
 func (m *Manager) Prepare(target string) error {
 	m.target = target
 	for _, format := range m.formats {
-		// 数据库类格式在当前构建中不支持（需要外部驱动）
-		if format == "sqlite" || format == "mysql" || format == "postgresql" {
+		// MySQL/PostgreSQL 需要外部数据库服务，当前构建不支持
+		if format == "mysql" || format == "postgresql" {
 			if m.Warning != nil {
 				m.Warning(fmt.Sprintf(
 					"Warning: %s output format is not supported in this build, skipping",
@@ -205,7 +211,22 @@ func (m *Manager) Prepare(target string) error {
 			}
 			continue
 		}
+
 		if format == "sqlite" {
+			// 与 dirsearch 一致：文件路径或表名缺省时静默跳过
+			pathTemplate := m.optionOf[format]
+			if pathTemplate == "" || m.table == "" {
+				continue
+			}
+			file := m.FormatPath(pathTemplate, target, format)
+			table := m.FormatPath(m.table, target, format)
+			report := &sqliteReport{}
+			if err := report.initiate(file, table); err != nil {
+				return err
+			}
+			m.sqlite = report
+			m.files[format] = file
+			m.tables[format] = table
 			continue
 		}
 
@@ -237,6 +258,9 @@ func (m *Manager) Save(result Result) {
 		}
 		file := m.FormatPath(pathTemplate, result.URL, format)
 		report.save(file, result)
+	}
+	if m.sqlite != nil {
+		m.sqlite.save(m.files["sqlite"], m.tables["sqlite"], result)
 	}
 }
 

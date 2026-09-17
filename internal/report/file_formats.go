@@ -20,7 +20,7 @@ func saveSimple(r *fileReport, file string, result Result) {
 
 // newPlain 生成 plain 格式头部。
 func newPlain(r *fileReport) string {
-	return fmt.Sprintf("# Dirsearch started at %s as: %s\n",
+	return fmt.Sprintf("# HiDir started at %s as: %s\n",
 		r.meta.StartTime, r.meta.Command)
 }
 
@@ -101,9 +101,9 @@ func saveJSON(r *fileReport, file string, result Result) {
 	_ = utils.AtomicWriteText(file, string(out))
 }
 
-// xmlResult 表示 XML 报告结构。
+// xmlScan 表示 XML 报告结构（根元素 hidirscan，对应 dirsearch 的 dirsearchscan）。
 type xmlScan struct {
-	XMLName xml.Name    `xml:"dirsearchscan"`
+	XMLName xml.Name    `xml:"hidirscan"`
 	Args    string      `xml:"args,attr"`
 	Time    string      `xml:"time,attr"`
 	Results []xmlResult `xml:"result"`

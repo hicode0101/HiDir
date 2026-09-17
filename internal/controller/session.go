@@ -3,6 +3,7 @@ package controller
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -19,15 +20,40 @@ var extensionRegex = regexp.MustCompile(`\w+([.][a-zA-Z0-9]{2,5}){1,3}~?$`)
 
 // HandlePause 处理 Ctrl+C：暂停扫描并显示交互菜单。
 func (c *Controller) HandlePause() {
+	// 冻结进度条刷新，否则菜单会在 300ms 内被进度条擦除重绘，
+	// 用户看不到选项提示（dirsearch 的进度条由响应回调驱动，
+	// 暂停后自然停止刷新，因此需要显式冻结）
+	c.progressHold.Store(true)
+	// 与 updateProgress 互斥：确保在途的一次进度绘制已经完成
+	c.stateMutex.Lock()
+	c.stateMutex.Unlock()
+	defer c.progressHold.Store(false)
+
 	if c.fuzzer == nil {
 		viewForceQuit()
 		os.Exit(1)
 	}
 
+	c.UI.Warning("CTRL+C detected: Pausing threads, please wait...", false)
+
 	allPaused := c.fuzzer.Pause()
 	if !allPaused {
 		c.UI.Warning("Could not pause all threads (some may be blocked on I/O). "+
 			"Press CTRL+C again to force quit.", false)
+	}
+
+	// 暂停菜单期间再次按下 Ctrl+C 立即强制退出（与 dirsearch 一致）
+	stopForceQuit := make(chan struct{})
+	defer close(stopForceQuit)
+	if c.sigChan != nil {
+		go func() {
+			select {
+			case <-c.sigChan:
+				viewForceQuit()
+				os.Exit(1)
+			case <-stopForceQuit:
+			}
+		}()
 	}
 
 	for {
@@ -92,15 +118,27 @@ func (c *Controller) HandlePause() {
 }
 
 // readLine 读取一行用户输入。
+// Windows 下 Ctrl+C 可能中止挂起的控制台读取使其立即报错返回，
+// 因此失败时短暂等待后重试；连续失败（如 stdin 已关闭/EOF）
+// 则强制退出，避免菜单循环空转刷屏。
 func (c *Controller) readLine() string {
 	if c.QuietInput != nil {
 		return strings.TrimSpace(c.QuietInput())
 	}
-	line, err := c.stdin.ReadString('\n')
-	if err != nil {
-		return ""
+	for attempts := 0; ; attempts++ {
+		line, err := c.stdin.ReadString('\n')
+		if line != "" {
+			return strings.TrimSpace(line)
+		}
+		if err == nil {
+			continue
+		}
+		if err == io.EOF || attempts >= 2 {
+			viewForceQuit()
+			os.Exit(1)
+		}
+		time.Sleep(50 * time.Millisecond)
 	}
-	return strings.TrimSpace(line)
 }
 
 // viewForceQuit 输出强制退出警告。

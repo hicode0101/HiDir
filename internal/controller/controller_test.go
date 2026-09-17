@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"hidir/internal/options"
+	"hidir/internal/scanner"
 	"hidir/internal/utils"
 	"hidir/internal/view"
 )
@@ -492,5 +493,59 @@ func TestScanUnreachableTarget(t *testing.T) {
 	output := runScan(t, opts)
 	if !strings.Contains(output, "Cannot connect to") && !strings.Contains(output, "timeout") {
 		t.Errorf("connect error should be reported:\n%s", output)
+	}
+}
+
+// ---- Ctrl+C 暂停菜单 ----
+
+func TestHandlePauseMenu(t *testing.T) {
+	server := newScanServer()
+	defer server.Close()
+
+	wordlist := t.TempDir() + "/words.txt"
+	if err := os.WriteFile(wordlist, []byte("admin\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	opts := integrationOptions(t, []string{
+		"-u", server.URL + "/", "-w", wordlist, "-t", "2", "--no-color",
+	})
+
+	rfs := utils.NewResourceFS()
+	ui := view.NewCLI(false, false, false)
+	ctrl := NewController(opts, rfs, ui)
+	if err := ctrl.Setup(); err != nil {
+		t.Fatalf("Setup: %v", err)
+	}
+	if err := ctrl.SetTarget(opts.URLs[0]); err != nil {
+		t.Fatalf("SetTarget: %v", err)
+	}
+	ctrl.fuzzer = scanner.NewFuzzer(ctrl.requester, ctrl.dictionary, opts, ctrl.blacklists,
+		scanner.Callbacks{}, 0)
+
+	// [c]ontinue：菜单等待输入期间必须冻结进度刷新，返回后解除冻结
+	inputs := []string{"c"}
+	pos := 0
+	ctrl.QuietInput = func() string {
+		if !ctrl.progressHold.Load() {
+			t.Error("progressHold must be set while the pause menu waits for input")
+		}
+		v := inputs[pos]
+		pos++
+		return v
+	}
+	ctrl.HandlePause()
+	if ctrl.progressHold.Load() {
+		t.Error("progressHold must be cleared after resuming")
+	}
+
+	// 无效输入后 [q]uit：菜单循环应重新提示并记录退出中断
+	inputs = []string{"x", "q", "q"}
+	pos = 0
+	ctrl.HandlePause()
+	if ctrl.currentInterrupt == nil || ctrl.currentInterrupt.Type != InterruptQuit {
+		t.Errorf("expected quit interrupt, got %+v", ctrl.currentInterrupt)
+	}
+	if ctrl.progressHold.Load() {
+		t.Error("progressHold must be cleared after quitting")
 	}
 }

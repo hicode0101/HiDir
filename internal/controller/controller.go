@@ -12,6 +12,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"hidir/internal/httpx"
@@ -106,6 +107,11 @@ type Controller struct {
 	stateMutex sync.Mutex
 	// currentInterrupt 是待处理的中断。
 	currentInterrupt *Interrupt
+
+	// sigChan 是 Ctrl+C/终止信号通道（由 Run 创建），暂停期间用于二次 Ctrl+C 强退。
+	sigChan chan os.Signal
+	// progressHold 为 true 时冻结进度条刷新，避免覆盖交互菜单。
+	progressHold atomic.Bool
 
 	// SessionFile 是当前会话文件（可能为空）。
 	SessionFile string
@@ -233,7 +239,7 @@ func (c *Controller) Setup() error {
 			filePaths[format] = c.Options.OutputFile
 		}
 	}
-	c.reporter = report.NewManager(c.Options.OutputFormats, meta, filePaths)
+	c.reporter = report.NewManager(c.Options.OutputFormats, meta, filePaths, c.Options.OutputTable)
 	c.reporter.Warning = func(message string) {
 		c.UI.NewLineSave(message, true)
 	}

@@ -24,6 +24,7 @@ func (c *Controller) Run() error {
 
 	// Ctrl+C 处理
 	sigChan := make(chan os.Signal, 1)
+	c.sigChan = sigChan
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		for range sigChan {
@@ -261,6 +262,10 @@ func (c *Controller) progressLoop(done chan struct{}) {
 func (c *Controller) updateProgress() {
 	c.stateMutex.Lock()
 	defer c.stateMutex.Unlock()
+	// 交互菜单（暂停）期间冻结刷新，避免进度条擦除菜单提示
+	if c.progressHold.Load() {
+		return
+	}
 	if c.fuzzer == nil || c.dictionary == nil {
 		return
 	}
