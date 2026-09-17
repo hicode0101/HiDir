@@ -358,9 +358,13 @@ func (c *Controller) SetTarget(target string) error {
 	}
 
 	// 端口解析与默认值
+	// scheme 未定时不能提前回填默认端口（对应 dirsearch 中 port=None 的语义），
+	// 否则探测阶段会拿到 0 号端口，且无法进入"未提供端口"的回退分支。
 	port := parsed.Port()
 	if port == "" {
-		port = fmt.Sprintf("%d", settings.StandardPorts[parsed.Scheme])
+		if parsed.Scheme != settings.Unknown {
+			port = fmt.Sprintf("%d", settings.StandardPorts[parsed.Scheme])
+		}
 	} else if !validPort(port) {
 		return &Interrupt{Message: fmt.Sprintf("Invalid port number: %s", port)}
 	}
@@ -370,12 +374,13 @@ func (c *Controller) SetTarget(target string) error {
 	if scheme == settings.Unknown {
 		if c.Options.Scheme != "" {
 			scheme = c.Options.Scheme
+		} else if port == "" {
+			// scheme 与端口均未提供：用 443 探测协议，再按探测结果回填标准端口
+			scheme = DetectScheme(parsed.Hostname(), "443", c.Options.IP)
+			port = fmt.Sprintf("%d", settings.StandardPorts[scheme])
 		} else {
 			scheme = DetectScheme(parsed.Hostname(), port, c.Options.IP)
 		}
-	}
-	if portNum, err := netLookupPort(port); err == nil && settings.StandardPorts[scheme] != 0 {
-		_ = portNum
 	}
 
 	host := parsed.Hostname()
@@ -417,15 +422,6 @@ func validPort(port string) bool {
 		n = n*10 + int(ch-'0')
 	}
 	return n > 0 && n < 65536
-}
-
-// netLookupPort 占位（保持与 dirsearch 端口校验语义一致）。
-func netLookupPort(port string) (int, error) {
-	n := 0
-	for _, ch := range port {
-		n = n*10 + int(ch-'0')
-	}
-	return n, nil
 }
 
 // DetectScheme 通过 TLS 连接探测目标协议。

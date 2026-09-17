@@ -12,8 +12,12 @@ const Version = "1.0.0"
 
 // Banner 是启动时打印的 ASCII Logo（风格与 dirsearch 保持一致）。
 const Banner = `
-  _|. _ _  _  _  _ _|_    v` + Version + `
- (_||| _) (/_(_|| (_| )
+ _   _ _ ____  _          v` + Version + `
+| | | (_)  _ \(_)_ __ 
+| |_| | | | | | | '__|
+|  _  | | |_| | | |   
+|_| |_|_|____/|_|_|   
+                      
 `
 
 // DefaultEncoding 是默认的响应解码字符集。
