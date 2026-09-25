@@ -2,7 +2,7 @@
 
 # HiDir
 
-**高性能 Web 路径（目录 / 文件）暴力扫描器 —— dirsearch 的 Go 实现**
+**高性能 Web 路径（目录 / 文件）扫描器 —— dirsearch 的 Go 实现**
 
 单文件运行 · 零依赖 · 完整兼容 dirsearch 命令行参数 · 内置全套词表数据库
 
